@@ -2,6 +2,7 @@ import { CELL_SIZE, DELTA_TIME, GAP_SIZE, GHOSTS, GRID_HEIGHT, GRID_WIDTH, PACMA
 import { AnimationData, GhostName, StoreType } from '../types';
 import { Utils } from '../../shared/utils/utils';
 import { RendererUnits } from './renderer-units';
+import { F1_CAR_IMAGES, CHECKERED_FLAG_PATTERN } from '../core/f1-graphics';
 
 const SVG_KEY_TIMES_PRECISION = 4;
 
@@ -24,6 +25,7 @@ const generateAnimatedSVG = (store: StoreType) => {
 	</metadata>`;
 	svg += `<rect width="100%" height="100%" fill="${Utils.getCurrentTheme(store).gridBackground}"/>`;
 
+	svg += CHECKERED_FLAG_PATTERN;
 	svg += generateGhostsPredefinition();
 
 	// Month labels
@@ -42,8 +44,8 @@ const generateAnimatedSVG = (store: StoreType) => {
 			const cellX = x * (CELL_SIZE + GAP_SIZE);
 			const cellY = y * (CELL_SIZE + GAP_SIZE) + 15;
 			const cellColorAnimation = generateChangingValuesAnimation(store, generateCellColorValues(store, x, y));
-			svg += `<rect id="c-${x}-${y}" x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" rx="5" fill="${Utils.getCurrentTheme(store).intensityColors[0]}">
-				<animate attributeName="fill" dur="${totalDurationMs}ms" repeatCount="indefinite" 
+			svg += `<rect id="c-${x}-${y}" x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" rx="2" fill="${Utils.getCurrentTheme(store).intensityColors[0]}">
+				<animate attributeName="fill" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
 					values="${cellColorAnimation.values}" 
 					keyTimes="${cellColorAnimation.keyTimes}"/>
 			</rect>`;
@@ -82,29 +84,42 @@ const generateAnimatedSVG = (store: StoreType) => {
 		}
 	}
 
-	// Pacman
+	// F1 Car
 	const pacmanColorAnimation = generateChangingValuesAnimation(
 		store,
 		store.gameHistory.map((el) => RendererUnits.generatePacManColors(el.pacman))
 	);
 	const pacmanPositionAnimation = generateChangingValuesAnimation(store, generatePacManPositions(store));
-	const pacmanRotationAnimation = generateChangingValuesAnimation(store, generatePacManRotations(store));
-	svg += `<path id="pacman" d="${generatePacManPath(0.55)}" fill="${PACMAN_COLOR}">
-		<animate attributeName="fill" dur="${totalDurationMs}ms" repeatCount="indefinite"
-			keyTimes="${pacmanColorAnimation.keyTimes}"
-			values="${pacmanColorAnimation.values}"/>
+	
+	// Map F1 car direction changes for visibility animation
+	const f1CarDirectionChanges = mapF1CarDirectionChanges(store);
+
+	svg += `<g id="f1-car-group" transform="translate(0,0)">
 		<animateTransform attributeName="transform" type="translate" dur="${totalDurationMs}ms" repeatCount="indefinite"
 			keyTimes="${pacmanPositionAnimation.keyTimes}"
 			values="${pacmanPositionAnimation.values}"
-			additive="sum"/>
-		<animateTransform attributeName="transform" type="rotate" dur="${totalDurationMs}ms" repeatCount="indefinite"
-			keyTimes="${pacmanRotationAnimation.keyTimes}"
-			values="${pacmanRotationAnimation.values}"
-			calcMode="discrete"
-			additive="sum"/>
-		<animate attributeName="d" dur="0.5s" repeatCount="indefinite"
-			values="${generatePacManPath(0.55)};${generatePacManPath(0.05)};${generatePacManPath(0.55)}"/>
-	</path>`;
+			additive="replace"/>`;
+
+	// For each direction, create a <use> element with visibility animation
+	['up', 'down', 'left', 'right'].forEach((direction) => {
+		const directionChanges = f1CarDirectionChanges[direction];
+		if (directionChanges && directionChanges.length > 0) {
+			const keyTimes = directionChanges.map((kf) => kf.time.toFixed(SVG_KEY_TIMES_PRECISION)).join(';');
+			const values = directionChanges.map((kf) => (kf.visible ? 'visible' : 'hidden')).join(';');
+			const initialVisibility = directionChanges[0].visible ? 'visible' : 'hidden';
+
+			const scale = 1.8;
+			const offset = (CELL_SIZE - (CELL_SIZE * scale)) / 2;
+			svg += `<use href="#f1-car-${direction}" x="${offset}" y="${offset}" width="${CELL_SIZE * scale}" height="${CELL_SIZE * scale}" visibility="${initialVisibility}">
+				<animate attributeName="visibility" 
+					dur="${totalDurationMs}ms" repeatCount="indefinite"
+					keyTimes="${keyTimes}"
+					values="${values}" />
+			</use>`;
+		}
+	});
+
+	svg += `</g>`;
 
 	// Process each ghost separately
 	store.ghosts.forEach((ghost, index) => {
@@ -254,16 +269,58 @@ function mapGhostStateChanges(store: StoreType, ghostIndex: number) {
 	return stateChanges;
 }
 
-const generatePacManPath = (mouthAngle: number) => {
-	const radius = CELL_SIZE / 2;
-	const startAngle = mouthAngle;
-	const endAngle = 2 * Math.PI - mouthAngle;
+const mapF1CarDirectionChanges = (store: StoreType) => {
+	// A map of directions with their visibility keyframes
+	// Key: "up" | "down" | "left" | "right"
+	// Value: array of {time: number, visible: boolean}
+	const directionChanges: Record<string, { time: number; visible: boolean }[]> = {};
 
-	return `M ${radius},${radius}
-            L ${radius + radius * Math.cos(startAngle)},${radius + radius * Math.sin(startAngle)}
-            A ${radius},${radius} 0 1,1 ${radius + radius * Math.cos(endAngle)},${radius + radius * Math.sin(endAngle)}
-            Z`;
-};
+	// Initialize all directions as hidden
+	['up', 'down', 'left', 'right'].forEach((direction) => {
+		directionChanges[direction] = [{ time: 0, visible: false }];
+	});
+
+	// Set the initial direction
+	const initialDirection = store.gameHistory[0]?.pacman.direction || 'right';
+	directionChanges[initialDirection] = [{ time: 0, visible: true }];
+	let lastDirection = initialDirection;
+
+	// Process each frame of the game history
+	store.gameHistory.forEach((state, frameIndex) => {
+		const currentDirection = state.pacman.direction;
+		const currentTime = frameIndex / (store.gameHistory.length - 1);
+
+		// If the direction has changed
+		if (currentDirection !== lastDirection) {
+			// Hide previous direction
+			directionChanges[lastDirection].push({ time: currentTime, visible: false });
+
+			// Show new direction
+			if (!directionChanges[currentDirection]) {
+				directionChanges[currentDirection] = [{ time: 0, visible: false }];
+			}
+			directionChanges[currentDirection].push({ time: currentTime, visible: true });
+
+			// Update the latest direction
+			lastDirection = currentDirection;
+		}
+	});
+
+	// Ensure the last direction remains visible until the end
+	directionChanges[lastDirection].push({ time: 1, visible: true });
+
+	// Ensure all other directions are hidden until the end
+	Object.keys(directionChanges).forEach((direction) => {
+		if (direction !== lastDirection && directionChanges[direction].length > 0) {
+			const lastKeyframe = directionChanges[direction][directionChanges[direction].length - 1];
+			if (lastKeyframe.time < 1) {
+				directionChanges[direction].push({ time: 1, visible: false });
+			}
+		}
+	});
+
+	return directionChanges;
+}
 
 const generatePacManPositions = (store: StoreType): string[] => {
 	return store.gameHistory.map((state) => {
@@ -273,36 +330,12 @@ const generatePacManPositions = (store: StoreType): string[] => {
 	});
 };
 
-const generatePacManRotations = (store: StoreType): string[] => {
-	const pivit = CELL_SIZE / 2;
-	const directionToRotation = (direction: 'right' | 'left' | 'up' | 'down'): string => {
-		switch (direction) {
-			case 'right':
-				return `0 ${pivit} ${pivit}`;
-			case 'left':
-				return `180 ${pivit} ${pivit}`;
-			case 'up':
-				return `270 ${pivit} ${pivit}`;
-			case 'down':
-				return `90 ${pivit} ${pivit}`;
-			default:
-				return `0 ${pivit} ${pivit}`;
-		}
-	};
-	// Position interpolates linearly between snapshot[i] and snapshot[i+1]
-	// during interval i. The direction stored in snapshot[i+1] is the
-	// direction Pac-Man took during that move, so it must be displayed for
-	// the entire slide, not just at its end. Shift the rotation values one
-	// frame forward so the discrete keyframe at time keyTimes[i] holds the
-	// direction of the slide that begins there.
-	return store.gameHistory.map((_, i) => {
-		const lookaheadIndex = Math.min(i + 1, store.gameHistory.length - 1);
-		return directionToRotation(store.gameHistory[lookaheadIndex].pacman.direction);
-	});
-};
-
 const generateCellColorValues = (store: StoreType, x: number, y: number): string[] => {
-	return store.gameHistory.map((state) => state.grid[x][y].color);
+	const theme = Utils.getCurrentTheme(store);
+	return store.gameHistory.map((state) => {
+		const color = state.grid[x][y].color;
+		return color === theme.intensityColors[0] ? color : 'url(#checkered-flag)';
+	});
 };
 
 const generateGhostPositions = (store: StoreType, ghostIndex: number): string[] => {
@@ -321,6 +354,20 @@ const generateGhostPositions = (store: StoreType, ghostIndex: number): string[] 
 
 const generateGhostsPredefinition = () => {
 	let defs = `<defs>`;
+
+	// For F1 car - add symbols for each direction
+	['up', 'down', 'left', 'right'].forEach((direction) => {
+		const carImage = F1_CAR_IMAGES[direction as keyof typeof F1_CAR_IMAGES];
+		let rot = 0;
+		if (direction === 'right') rot = 90;
+		if (direction === 'down') rot = 180;
+		if (direction === 'left') rot = 270;
+		defs += `
+                <symbol id="f1-car-${direction}" viewBox="0 0 ${CELL_SIZE} ${CELL_SIZE}">
+                    <image href="${carImage}" width="${CELL_SIZE}" height="${CELL_SIZE}" transform="rotate(${rot} ${CELL_SIZE/2} ${CELL_SIZE/2})"/>
+                </symbol>
+                `;
+	});
 
 	// For every regular ghost
 	['blinky', 'inky', 'pinky', 'clyde'].forEach((ghostName) => {
