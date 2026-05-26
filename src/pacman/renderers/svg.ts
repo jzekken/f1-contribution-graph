@@ -52,11 +52,11 @@ const generateAnimatedSVG = (store: StoreType) => {
 			const visibilityValues = generateCellVisibilityValues(store, x, y);
 			if (visibilityValues.some((v) => v === 'visible')) {
 				const cellVisibilityAnimation = generateChangingValuesAnimation(store, visibilityValues);
-				svg += `<rect x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" rx="2" fill="url(#checkered-flag)" visibility="${visibilityValues[0]}">
+				svg += `<use href="#checkered-flag-cell" x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" visibility="${visibilityValues[0]}">
 					<animate attributeName="visibility" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
 						values="${cellVisibilityAnimation.values}" 
 						keyTimes="${cellVisibilityAnimation.keyTimes}"/>
-				</rect>`;
+				</use>`;
 			}
 		}
 	}

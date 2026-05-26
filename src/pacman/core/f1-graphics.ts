@@ -11,11 +11,11 @@ export const F1_CAR_IMAGES = {
 // SVG pattern for checkered flag (like GitHub contribution grid but with F1 theme)
 export const CHECKERED_FLAG_PATTERN = `
 	<defs>
-		<pattern id="checkered-flag" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+		<symbol id="checkered-flag-cell" viewBox="0 0 10 10">
 			<rect x="0" y="0" width="5" height="5" fill="white"/>
 			<rect x="5" y="0" width="5" height="5" fill="black"/>
 			<rect x="0" y="5" width="5" height="5" fill="black"/>
 			<rect x="5" y="5" width="5" height="5" fill="white"/>
-		</pattern>
+		</symbol>
 	</defs>
 `;

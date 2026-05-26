@@ -3035,12 +3035,12 @@ const F1_CAR_IMAGES = {
 // SVG pattern for checkered flag (like GitHub contribution grid but with F1 theme)
 const CHECKERED_FLAG_PATTERN = `
 	<defs>
-		<pattern id="checkered-flag" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
+		<symbol id="checkered-flag-cell" viewBox="0 0 10 10">
 			<rect x="0" y="0" width="5" height="5" fill="white"/>
 			<rect x="5" y="0" width="5" height="5" fill="black"/>
 			<rect x="0" y="5" width="5" height="5" fill="black"/>
 			<rect x="5" y="5" width="5" height="5" fill="white"/>
-		</pattern>
+		</symbol>
 	</defs>
 `;
 
@@ -4462,11 +4462,11 @@ const generateAnimatedSVG = (store) => {
             const visibilityValues = generateCellVisibilityValues(store, x, y);
             if (visibilityValues.some((v) => v === 'visible')) {
                 const cellVisibilityAnimation = generateChangingValuesAnimation(store, visibilityValues);
-                svg += `<rect x="${cellX}" y="${cellY}" width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" rx="2" fill="url(#checkered-flag)" visibility="${visibilityValues[0]}">
+                svg += `<use href="#checkered-flag-cell" x="${cellX}" y="${cellY}" width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" visibility="${visibilityValues[0]}">
 					<animate attributeName="visibility" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
 						values="${cellVisibilityAnimation.values}" 
 						keyTimes="${cellVisibilityAnimation.keyTimes}"/>
-				</rect>`;
+				</use>`;
             }
         }
     }
