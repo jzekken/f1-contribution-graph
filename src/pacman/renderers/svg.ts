@@ -43,12 +43,21 @@ const generateAnimatedSVG = (store: StoreType) => {
 		for (let y = 0; y < GRID_HEIGHT; y++) {
 			const cellX = x * (CELL_SIZE + GAP_SIZE);
 			const cellY = y * (CELL_SIZE + GAP_SIZE) + 15;
-			const cellColorAnimation = generateChangingValuesAnimation(store, generateCellColorValues(store, x, y));
-			svg += `<rect id="c-${x}-${y}" x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" rx="2" fill="${Utils.getCurrentTheme(store).intensityColors[0]}">
-				<animate attributeName="fill" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
-					values="${cellColorAnimation.values}" 
-					keyTimes="${cellColorAnimation.keyTimes}"/>
-			</rect>`;
+			const theme = Utils.getCurrentTheme(store);
+			
+			// Base empty cell
+			svg += `<rect id="c-${x}-${y}" x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" rx="2" fill="${theme.intensityColors[0]}"></rect>`;
+			
+			// Checkered flag overlay (animated visibility)
+			const visibilityValues = generateCellVisibilityValues(store, x, y);
+			if (visibilityValues.some((v) => v === 'visible')) {
+				const cellVisibilityAnimation = generateChangingValuesAnimation(store, visibilityValues);
+				svg += `<rect x="${cellX}" y="${cellY}" width="${CELL_SIZE}" height="${CELL_SIZE}" rx="2" fill="url(#checkered-flag)" visibility="${visibilityValues[0]}">
+					<animate attributeName="visibility" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
+						values="${cellVisibilityAnimation.values}" 
+						keyTimes="${cellVisibilityAnimation.keyTimes}"/>
+				</rect>`;
+			}
 		}
 	}
 
@@ -330,11 +339,11 @@ const generatePacManPositions = (store: StoreType): string[] => {
 	});
 };
 
-const generateCellColorValues = (store: StoreType, x: number, y: number): string[] => {
+const generateCellVisibilityValues = (store: StoreType, x: number, y: number): string[] => {
 	const theme = Utils.getCurrentTheme(store);
 	return store.gameHistory.map((state) => {
 		const color = state.grid[x][y].color;
-		return color === theme.intensityColors[0] ? color : 'url(#checkered-flag)';
+		return color === theme.intensityColors[0] ? 'hidden' : 'visible';
 	});
 };
 

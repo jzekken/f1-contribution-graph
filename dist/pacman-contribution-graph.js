@@ -4455,12 +4455,19 @@ const generateAnimatedSVG = (store) => {
         for (let y = 0; y < _core_constants__WEBPACK_IMPORTED_MODULE_0__.GRID_HEIGHT; y++) {
             const cellX = x * (_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE + _core_constants__WEBPACK_IMPORTED_MODULE_0__.GAP_SIZE);
             const cellY = y * (_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE + _core_constants__WEBPACK_IMPORTED_MODULE_0__.GAP_SIZE) + 15;
-            const cellColorAnimation = generateChangingValuesAnimation(store, generateCellColorValues(store, x, y));
-            svg += `<rect id="c-${x}-${y}" x="${cellX}" y="${cellY}" width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" rx="2" fill="${_shared_utils_utils__WEBPACK_IMPORTED_MODULE_1__.Utils.getCurrentTheme(store).intensityColors[0]}">
-				<animate attributeName="fill" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
-					values="${cellColorAnimation.values}" 
-					keyTimes="${cellColorAnimation.keyTimes}"/>
-			</rect>`;
+            const theme = _shared_utils_utils__WEBPACK_IMPORTED_MODULE_1__.Utils.getCurrentTheme(store);
+            // Base empty cell
+            svg += `<rect id="c-${x}-${y}" x="${cellX}" y="${cellY}" width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" rx="2" fill="${theme.intensityColors[0]}"></rect>`;
+            // Checkered flag overlay (animated visibility)
+            const visibilityValues = generateCellVisibilityValues(store, x, y);
+            if (visibilityValues.some((v) => v === 'visible')) {
+                const cellVisibilityAnimation = generateChangingValuesAnimation(store, visibilityValues);
+                svg += `<rect x="${cellX}" y="${cellY}" width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" rx="2" fill="url(#checkered-flag)" visibility="${visibilityValues[0]}">
+					<animate attributeName="visibility" dur="${totalDurationMs}ms" repeatCount="indefinite" calcMode="discrete"
+						values="${cellVisibilityAnimation.values}" 
+						keyTimes="${cellVisibilityAnimation.keyTimes}"/>
+				</rect>`;
+            }
         }
     }
     // Horizontal walls
@@ -4697,11 +4704,11 @@ const generatePacManPositions = (store) => {
         return `${x},${y}`;
     });
 };
-const generateCellColorValues = (store, x, y) => {
+const generateCellVisibilityValues = (store, x, y) => {
     const theme = _shared_utils_utils__WEBPACK_IMPORTED_MODULE_1__.Utils.getCurrentTheme(store);
     return store.gameHistory.map((state) => {
         const color = state.grid[x][y].color;
-        return color === theme.intensityColors[0] ? color : 'url(#checkered-flag)';
+        return color === theme.intensityColors[0] ? 'hidden' : 'visible';
     });
 };
 const generateGhostPositions = (store, ghostIndex) => {
