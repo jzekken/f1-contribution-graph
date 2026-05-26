@@ -107,7 +107,8 @@ const startGame = async (store: StoreType) => {
 		placeGhosts(store);
 	}
 
-	while (remainingCells()) {
+	const MAX_FRAMES = 30000;
+	while (remainingCells() && store.frameCount < MAX_FRAMES) {
 		await updateGame(store);
 	}
 	await updateGame(store);
@@ -216,9 +217,22 @@ const updateGame = async (store: StoreType) => {
 /* ---------- snapshot helper ---------- */
 const pushSnapshot = (store: StoreType) => {
 	store.gameHistory.push({
-		pacman: { ...store.pacman },
-		ghosts: store.ghosts.map((g) => ({ ...g })),
-		grid: store.grid.map((row) => row.map((col) => ({ ...col })))
+		pacman: { 
+			x: store.pacman.x, 
+			y: store.pacman.y, 
+			direction: store.pacman.direction,
+			powerupRemainingDuration: store.pacman.powerupRemainingDuration 
+		} as any,
+		ghosts: store.ghosts.map((g) => ({ 
+			x: g.x, 
+			y: g.y, 
+			subX: g.subX, 
+			subY: g.subY, 
+			name: g.name, 
+			direction: g.direction, 
+			scared: g.scared 
+		} as any)),
+		grid: store.grid.map((row) => row.map((col) => ({ color: col.color } as any)))
 	});
 };
 

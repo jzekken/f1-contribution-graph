@@ -3171,7 +3171,8 @@ const startGame = (store) => __awaiter(void 0, void 0, void 0, function* () {
         placePacman(store);
         placeGhosts(store);
     }
-    while (remainingCells()) {
+    const MAX_FRAMES = 30000;
+    while (remainingCells() && store.frameCount < MAX_FRAMES) {
         yield updateGame(store);
     }
     yield updateGame(store);
@@ -3266,9 +3267,22 @@ const updateGame = (store) => __awaiter(void 0, void 0, void 0, function* () {
 /* ---------- snapshot helper ---------- */
 const pushSnapshot = (store) => {
     store.gameHistory.push({
-        pacman: Object.assign({}, store.pacman),
-        ghosts: store.ghosts.map((g) => (Object.assign({}, g))),
-        grid: store.grid.map((row) => row.map((col) => (Object.assign({}, col))))
+        pacman: {
+            x: store.pacman.x,
+            y: store.pacman.y,
+            direction: store.pacman.direction,
+            powerupRemainingDuration: store.pacman.powerupRemainingDuration
+        },
+        ghosts: store.ghosts.map((g) => ({
+            x: g.x,
+            y: g.y,
+            subX: g.subX,
+            subY: g.subY,
+            name: g.name,
+            direction: g.direction,
+            scared: g.scared
+        })),
+        grid: store.grid.map((row) => row.map((col) => ({ color: col.color })))
     });
 };
 /* ---------- collisions & house ---------- */
