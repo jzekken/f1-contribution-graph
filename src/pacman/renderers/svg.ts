@@ -397,7 +397,9 @@ const generateGhostsPredefinition = () => {
 	// Add the scared ghost
 	defs += `
     <symbol id="ghost-scared" viewBox="0 0 ${CELL_SIZE} ${CELL_SIZE}">
-        <image href="${(GHOSTS['scared'] as { imgDate: string }).imgDate}" width="${CELL_SIZE}" height="${CELL_SIZE}"/>
+        <image href="${(GHOSTS['scared'] as { imgDate: string }).imgDate}" 
+            x="${CELL_SIZE * -0.15}" y="${CELL_SIZE * -0.15}" 
+            width="${CELL_SIZE * 1.3}" height="${CELL_SIZE * 1.3}"/>
     </symbol>`;
 
 	// Add ghost eyes (for each direction)

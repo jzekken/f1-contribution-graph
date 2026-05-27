@@ -4757,7 +4757,9 @@ const generateGhostsPredefinition = () => {
     // Add the scared ghost
     defs += `
     <symbol id="ghost-scared" viewBox="0 0 ${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE} ${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}">
-        <image href="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.GHOSTS['scared'].imgDate}" width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE}"/>
+        <image href="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.GHOSTS['scared'].imgDate}" 
+            x="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE * -0.15}" y="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE * -0.15}" 
+            width="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE * 1.3}" height="${_core_constants__WEBPACK_IMPORTED_MODULE_0__.CELL_SIZE * 1.3}"/>
     </symbol>`;
     // Add ghost eyes (for each direction)
     ['up', 'down', 'left', 'right'].forEach((direction) => {
