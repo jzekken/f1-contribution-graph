@@ -117,7 +117,7 @@ const generateAnimatedSVG = (store: StoreType) => {
 			const values = directionChanges.map((kf) => (kf.visible ? 'visible' : 'hidden')).join(';');
 			const initialVisibility = directionChanges[0].visible ? 'visible' : 'hidden';
 
-			const scale = 1.8;
+			const scale = 2.2;
 			const offset = (CELL_SIZE - (CELL_SIZE * scale)) / 2;
 			svg += `<use href="#f1-car-${direction}" x="${offset}" y="${offset}" width="${CELL_SIZE * scale}" height="${CELL_SIZE * scale}" visibility="${initialVisibility}">
 				<animate attributeName="visibility" 
